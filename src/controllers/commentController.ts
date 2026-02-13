@@ -1,15 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import Comment from '../models/Comment';
 import Post from '../models/Post';
 import mongoose from 'mongoose';
-
-// Extended request with user info from auth middleware
-interface AuthRequest extends Request {
-  userId?: string;
-}
+import { AuthRequest } from '../middleware/auth';
 
 // Get comments for a post
-export const getComments = async (req: Request, res: Response): Promise<void> => {
+export const getComments = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { postId } = req.params;
     const page = parseInt(req.query.page as string) || 1;
@@ -50,9 +46,9 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
   try {
     const { postId } = req.params;
     const { text } = req.body;
-    const userId = req.userId;
+    const user = req.user;
 
-    if (!userId) {
+    if (!user) {
       res.status(401).json({ success: false, message: 'Unauthorized' });
       return;
     }
@@ -76,7 +72,7 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
 
     const comment = new Comment({
       postId,
-      userId,
+      userId: user._id,
       text: text.trim(),
     });
 
@@ -101,9 +97,9 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
 export const deleteComment = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { postId, commentId } = req.params;
-    const userId = req.userId;
+    const user = req.user;
 
-    if (!userId) {
+    if (!user) {
       res.status(401).json({ success: false, message: 'Unauthorized' });
       return;
     }
@@ -120,7 +116,7 @@ export const deleteComment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    if (comment.userId.toString() !== userId) {
+    if (comment.userId.toString() !== user._id.toString()) {
       res.status(403).json({ success: false, message: 'Not authorized to delete this comment' });
       return;
     }
