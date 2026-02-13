@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+import passport from './config/passport';
+import authRoutes from './routes/authRoutes';
 
 // Create Express application
 const app: Application = express();
@@ -26,16 +28,16 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Initialize Passport
+app.use(passport.initialize());
+
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API routes will be added here
-// app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/posts', postRoutes);
-// app.use('/api/comments', commentRoutes);
+// API routes
+app.use('/api/auth', authRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
