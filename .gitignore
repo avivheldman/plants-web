@@ -137,3 +137,11 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+PROJECT_GUIDELINES.md
+
+# Development plan (local only)
+DEVELOPMENT_PLAN.md
+
+# Uploaded files (keep .gitkeep)
+uploads/*
+!uploads/.gitkeep
