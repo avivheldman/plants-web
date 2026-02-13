@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
 import searchRoutes from './routes/searchRoutes';
+import postRoutes from './routes/postRoutes';
 import { apiLimiter } from './middleware/rateLimiter';
 
 // Create Express application
@@ -38,6 +39,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api/search', searchRoutes);
+app.use('/api/posts', postRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

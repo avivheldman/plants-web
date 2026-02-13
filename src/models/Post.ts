@@ -1,63 +1,77 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IPost extends Document {
-  userId: mongoose.Types.ObjectId;
-  text: string;
-  imageUrl?: string;
+  _id: mongoose.Types.ObjectId;
+  author: mongoose.Types.ObjectId;
+  title: string;
+  content: string;
+  image?: string;
+  plantName?: string;
+  tags: string[];
   likesCount: number;
   commentsCount: number;
+  isPublished: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const PostSchema = new Schema<IPost>(
+const postSchema = new Schema<IPost>(
   {
-    userId: {
+    author: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
       index: true,
     },
-    text: {
+    title: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 2000,
+      maxlength: 200,
     },
-    imageUrl: {
+    content: {
+      type: String,
+      required: true,
+      maxlength: 5000,
+    },
+    image: {
+      type: String,
+      default: null,
+    },
+    plantName: {
       type: String,
       trim: true,
+      maxlength: 100,
+    },
+    tags: {
+      type: [String],
+      default: [],
     },
     likesCount: {
       type: Number,
       default: 0,
-      min: 0,
     },
     commentsCount: {
       type: Number,
       default: 0,
-      min: 0,
+    },
+    isPublished: {
+      type: Boolean,
+      default: true,
     },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
   }
 );
 
-// Index for efficient feed queries
-PostSchema.index({ createdAt: -1 });
-PostSchema.index({ userId: 1, createdAt: -1 });
+// Indexes for efficient queries
+postSchema.index({ createdAt: -1 });
+postSchema.index({ author: 1, createdAt: -1 });
+postSchema.index({ tags: 1 });
+postSchema.index({ plantName: 1 });
+postSchema.index({ title: 'text', content: 'text' });
 
-// Virtual for author population
-PostSchema.virtual('author', {
-  ref: 'User',
-  localField: 'userId',
-  foreignField: '_id',
-  justOne: true,
-});
-
-const Post = mongoose.model<IPost>('Post', PostSchema);
+const Post = mongoose.model<IPost>('Post', postSchema);
 
 export default Post;

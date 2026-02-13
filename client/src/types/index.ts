@@ -11,12 +11,15 @@ export interface User {
 // Post type for the feed
 export interface Post {
   _id: string;
-  userId: string;
-  author?: User;
-  text: string;
-  imageUrl?: string;
+  author: User | string;
+  title: string;
+  content: string;
+  image?: string;
+  plantName?: string;
+  tags: string[];
   likesCount: number;
   commentsCount: number;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }
