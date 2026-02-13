@@ -5,6 +5,8 @@ import morgan from 'morgan';
 import path from 'path';
 import passport from './config/passport';
 import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import socialRoutes from './routes/socialRoutes';
 
 // Create Express application
 const app: Application = express();
@@ -38,6 +40,8 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/social', socialRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
