@@ -7,6 +7,7 @@ import passport from './config/passport';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import socialRoutes from './routes/socialRoutes';
+import postRoutes from './routes/postRoutes';
 
 // Create Express application
 const app: Application = express();
@@ -42,6 +43,7 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/social', socialRoutes);
+app.use('/api/posts', postRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

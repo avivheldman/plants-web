@@ -2,7 +2,10 @@
 export interface User {
   _id: string;
   email: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
+  displayName?: string;
+  profilePhoto?: string;
   photoUrl?: string;
   createdAt: string;
   updatedAt?: string;
@@ -11,12 +14,15 @@ export interface User {
 // Post type for the feed
 export interface Post {
   _id: string;
-  userId: string;
-  author?: User;
-  text: string;
-  imageUrl?: string;
+  author: User;
+  title: string;
+  content: string;
+  image?: string;
+  plantName?: string;
+  tags: string[];
   likesCount: number;
   commentsCount: number;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -65,9 +71,19 @@ export interface ApiResponse<T> {
 
 // Pagination types
 export interface PaginatedResponse<T> {
+  success: boolean;
   data: T[];
   page: number;
   limit: number;
   total: number;
   hasMore: boolean;
+}
+
+// Create post input
+export interface CreatePostInput {
+  title: string;
+  content: string;
+  plantName?: string;
+  tags?: string[];
+  image?: File;
 }
