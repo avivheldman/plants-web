@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
 import passport from './config/passport';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './config/swagger';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import socialRoutes from './routes/socialRoutes';
@@ -33,6 +35,18 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Initialize Passport
 app.use(passport.initialize());
+
+// Swagger API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+}));
+
+// Swagger JSON endpoint
+app.get('/api-docs.json', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
