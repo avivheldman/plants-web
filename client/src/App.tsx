@@ -7,6 +7,8 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import EditProfilePage from './pages/EditProfilePage';
 import FeedPage from './pages/FeedPage';
+import CreatePostPage from './pages/CreatePostPage';
+import PostDetailPage from './pages/PostDetailPage';
 import NotFoundPage from './pages/NotFoundPage';
 import './App.css';
 
@@ -34,6 +36,12 @@ function App() {
                 <EditProfilePage />
               </ProtectedRoute>
             } />
+            <Route path="posts/create" element={
+              <ProtectedRoute>
+                <CreatePostPage />
+              </ProtectedRoute>
+            } />
+            <Route path="posts/:postId" element={<PostDetailPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
