@@ -15,9 +15,8 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
       user: {
         id: req.user._id,
         email: req.user.email,
-        firstName: req.user.firstName,
-        lastName: req.user.lastName,
-        profilePhoto: req.user.profilePhoto,
+        displayName: req.user.displayName,
+        photoUrl: req.user.photoUrl,
         createdAt: req.user.createdAt,
         updatedAt: req.user.updatedAt,
       },
@@ -42,9 +41,8 @@ export const getUserById = async (req: AuthRequest, res: Response): Promise<void
     res.json({
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profilePhoto: user.profilePhoto,
+        displayName: user.displayName,
+        photoUrl: user.photoUrl,
         createdAt: user.createdAt,
       },
     });
@@ -61,32 +59,20 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { firstName, lastName } = req.body;
+    const { displayName } = req.body;
 
-    const updateData: { firstName?: string; lastName?: string } = {};
+    const updateData: { displayName?: string } = {};
 
-    if (firstName !== undefined) {
-      if (typeof firstName !== 'string' || firstName.trim().length === 0) {
-        res.status(400).json({ error: 'First name cannot be empty' });
+    if (displayName !== undefined) {
+      if (typeof displayName !== 'string' || displayName.trim().length === 0) {
+        res.status(400).json({ error: 'Display name cannot be empty' });
         return;
       }
-      if (firstName.length > 50) {
-        res.status(400).json({ error: 'First name too long (max 50 characters)' });
+      if (displayName.length > 100) {
+        res.status(400).json({ error: 'Display name too long (max 100 characters)' });
         return;
       }
-      updateData.firstName = firstName.trim();
-    }
-
-    if (lastName !== undefined) {
-      if (typeof lastName !== 'string' || lastName.trim().length === 0) {
-        res.status(400).json({ error: 'Last name cannot be empty' });
-        return;
-      }
-      if (lastName.length > 50) {
-        res.status(400).json({ error: 'Last name too long (max 50 characters)' });
-        return;
-      }
-      updateData.lastName = lastName.trim();
+      updateData.displayName = displayName.trim();
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -109,9 +95,8 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       user: {
         id: updatedUser._id,
         email: updatedUser.email,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        profilePhoto: updatedUser.profilePhoto,
+        displayName: updatedUser.displayName,
+        photoUrl: updatedUser.photoUrl,
         updatedAt: updatedUser.updatedAt,
       },
     });
@@ -133,9 +118,8 @@ export const uploadPhoto = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    // Delete old profile photo if exists and it's a local file
-    if (req.user.profilePhoto && req.user.profilePhoto.startsWith('/uploads/')) {
-      const oldPhotoPath = path.join(__dirname, '../../', req.user.profilePhoto);
+    if (req.user.photoUrl && req.user.photoUrl.startsWith('/uploads/')) {
+      const oldPhotoPath = path.join(__dirname, '../../', req.user.photoUrl);
       if (fs.existsSync(oldPhotoPath)) {
         fs.unlinkSync(oldPhotoPath);
       }
@@ -145,7 +129,7 @@ export const uploadPhoto = async (req: AuthRequest, res: Response): Promise<void
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      { profilePhoto: photoUrl },
+      { photoUrl },
       { new: true }
     );
 
@@ -156,7 +140,7 @@ export const uploadPhoto = async (req: AuthRequest, res: Response): Promise<void
 
     res.json({
       message: 'Profile photo uploaded successfully',
-      profilePhoto: updatedUser.profilePhoto,
+      photoUrl: updatedUser.photoUrl,
     });
   } catch (error) {
     console.error('Upload photo error:', error);
@@ -171,15 +155,14 @@ export const deletePhoto = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    // Delete old profile photo if exists and it's a local file
-    if (req.user.profilePhoto && req.user.profilePhoto.startsWith('/uploads/')) {
-      const oldPhotoPath = path.join(__dirname, '../../', req.user.profilePhoto);
+    if (req.user.photoUrl && req.user.photoUrl.startsWith('/uploads/')) {
+      const oldPhotoPath = path.join(__dirname, '../../', req.user.photoUrl);
       if (fs.existsSync(oldPhotoPath)) {
         fs.unlinkSync(oldPhotoPath);
       }
     }
 
-    await User.findByIdAndUpdate(req.user._id, { profilePhoto: null });
+    await User.findByIdAndUpdate(req.user._id, { photoUrl: null });
 
     res.json({ message: 'Profile photo deleted successfully' });
   } catch (error) {

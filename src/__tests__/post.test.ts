@@ -14,8 +14,7 @@ describe('Post API', () => {
       .send({
         email: 'test@example.com',
         password: 'password123',
-        firstName: 'Test',
-        lastName: 'User',
+        displayName: 'Test User',
       });
 
     accessToken = registerResponse.body.accessToken;
@@ -61,7 +60,6 @@ describe('Post API', () => {
 
   describe('Post Queries', () => {
     beforeEach(async () => {
-      // Create multiple posts
       for (let i = 0; i < 5; i++) {
         await Post.create({
           author: new mongoose.Types.ObjectId(userId),
@@ -110,11 +108,11 @@ describe('Post API', () => {
 
       const populatedPost = await Post.findById(post._id).populate(
         'author',
-        'firstName lastName profilePhoto'
+        'displayName photoUrl'
       );
 
       expect(populatedPost?.author).toBeDefined();
-      expect((populatedPost?.author as unknown as { firstName: string }).firstName).toBe('Test');
+      expect((populatedPost?.author as unknown as { displayName: string }).displayName).toBe('Test User');
     });
   });
 });

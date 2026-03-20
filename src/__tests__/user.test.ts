@@ -12,8 +12,7 @@ describe('User API', () => {
       .send({
         email: 'test@example.com',
         password: 'password123',
-        firstName: 'Test',
-        lastName: 'User',
+        displayName: 'Test User',
       });
 
     accessToken = registerResponse.body.accessToken;
@@ -28,8 +27,7 @@ describe('User API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.user.email).toBe('test@example.com');
-      expect(response.body.user.firstName).toBe('Test');
-      expect(response.body.user.lastName).toBe('User');
+      expect(response.body.user.displayName).toBe('Test User');
     });
 
     it('should reject request without auth token', async () => {
@@ -46,32 +44,30 @@ describe('User API', () => {
         .put('/api/users/profile')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          firstName: 'Updated',
-          lastName: 'Name',
+          displayName: 'Updated Name',
         });
 
       expect(response.status).toBe(200);
-      expect(response.body.user.firstName).toBe('Updated');
-      expect(response.body.user.lastName).toBe('Name');
+      expect(response.body.user.displayName).toBe('Updated Name');
     });
 
-    it('should reject empty first name', async () => {
+    it('should reject empty display name', async () => {
       const response = await request(app)
         .put('/api/users/profile')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          firstName: '',
+          displayName: '',
         });
 
       expect(response.status).toBe(400);
     });
 
-    it('should reject first name exceeding max length', async () => {
+    it('should reject display name exceeding max length', async () => {
       const response = await request(app)
         .put('/api/users/profile')
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
-          firstName: 'a'.repeat(51),
+          displayName: 'a'.repeat(101),
         });
 
       expect(response.status).toBe(400);
@@ -85,7 +81,7 @@ describe('User API', () => {
         .set('Authorization', `Bearer ${accessToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.user.firstName).toBe('Test');
+      expect(response.body.user.displayName).toBe('Test User');
       expect(response.body.user.email).toBeUndefined();
     });
 
@@ -111,7 +107,6 @@ describe('User API', () => {
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Password changed successfully');
 
-      // Verify new password works
       const loginResponse = await request(app)
         .post('/api/auth/login')
         .send({

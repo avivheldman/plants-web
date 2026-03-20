@@ -32,10 +32,8 @@ const options: swaggerJsdoc.Options = {
           properties: {
             _id: { type: 'string' },
             email: { type: 'string', format: 'email' },
-            firstName: { type: 'string' },
-            lastName: { type: 'string' },
             displayName: { type: 'string' },
-            profilePhoto: { type: 'string' },
+            photoUrl: { type: 'string' },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
           },
