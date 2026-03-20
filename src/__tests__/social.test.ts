@@ -19,7 +19,7 @@ describe('Social API', () => {
         displayName: 'Test User',
       });
 
-    accessToken = registerResponse.body.accessToken;
+    accessToken = registerResponse.body.tokens.accessToken;
     userId = registerResponse.body.user.id;
 
     const post = await Post.create({
