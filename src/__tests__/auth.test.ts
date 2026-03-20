@@ -16,8 +16,8 @@ describe('Auth API', () => {
       expect(response.status).toBe(201);
       expect(response.body.message).toBe('Registration successful');
       expect(response.body.user.email).toBe('test@example.com');
-      expect(response.body.accessToken).toBeDefined();
-      expect(response.body.refreshToken).toBeDefined();
+      expect(response.body.tokens.accessToken).toBeDefined();
+      expect(response.body.tokens.refreshToken).toBeDefined();
     });
 
     it('should reject registration with missing fields', async () => {
@@ -70,8 +70,8 @@ describe('Auth API', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Login successful');
-      expect(response.body.accessToken).toBeDefined();
-      expect(response.body.refreshToken).toBeDefined();
+      expect(response.body.tokens.accessToken).toBeDefined();
+      expect(response.body.tokens.refreshToken).toBeDefined();
     });
 
     it('should reject invalid password', async () => {
@@ -111,7 +111,7 @@ describe('Auth API', () => {
           displayName: 'Test User',
         });
 
-      refreshToken = registerResponse.body.refreshToken;
+      refreshToken = registerResponse.body.tokens.refreshToken;
     });
 
     it('should refresh tokens with valid refresh token', async () => {
@@ -120,8 +120,8 @@ describe('Auth API', () => {
         .send({ refreshToken });
 
       expect(response.status).toBe(200);
-      expect(response.body.accessToken).toBeDefined();
-      expect(response.body.refreshToken).toBeDefined();
+      expect(response.body.tokens.accessToken).toBeDefined();
+      expect(response.body.tokens.refreshToken).toBeDefined();
     });
 
     it('should reject invalid refresh token', async () => {
@@ -146,8 +146,8 @@ describe('Auth API', () => {
           displayName: 'Test User',
         });
 
-      accessToken = registerResponse.body.accessToken;
-      refreshToken = registerResponse.body.refreshToken;
+      accessToken = registerResponse.body.tokens.accessToken;
+      refreshToken = registerResponse.body.tokens.refreshToken;
     });
 
     it('should logout successfully', async () => {

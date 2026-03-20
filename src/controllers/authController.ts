@@ -48,7 +48,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         displayName: user.displayName,
         photoUrl: user.photoUrl,
       },
-      ...tokens,
+      tokens,
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -98,7 +98,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         displayName: user.displayName,
         photoUrl: user.photoUrl,
       },
-      ...tokens,
+      tokens,
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -180,11 +180,34 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 
     res.json({
       message: 'Tokens refreshed',
-      ...tokens,
+      tokens,
     });
   } catch (error) {
     console.error('Refresh token error:', error);
     res.status(500).json({ error: 'Token refresh failed' });
+  }
+};
+
+export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+
+    res.json({
+      user: {
+        id: req.user._id,
+        email: req.user.email,
+        displayName: req.user.displayName,
+        photoUrl: req.user.photoUrl,
+        createdAt: req.user.createdAt,
+        updatedAt: req.user.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ error: 'Failed to get user' });
   }
 };
 

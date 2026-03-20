@@ -6,6 +6,7 @@ import {
   logout,
   logoutAll,
   refreshToken,
+  getMe,
   googleCallback,
   facebookCallback,
 } from '../controllers/authController';
@@ -19,6 +20,7 @@ router.post('/login', login);
 router.post('/logout', authenticate, logout);
 router.post('/logout-all', authenticate, logoutAll);
 router.post('/refresh', refreshToken);
+router.get('/me', authenticate, getMe);
 
 // Google OAuth
 router.get(
