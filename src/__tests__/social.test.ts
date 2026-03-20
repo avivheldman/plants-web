@@ -16,14 +16,12 @@ describe('Social API', () => {
       .send({
         email: 'test@example.com',
         password: 'password123',
-        firstName: 'Test',
-        lastName: 'User',
+        displayName: 'Test User',
       });
 
     accessToken = registerResponse.body.accessToken;
     userId = registerResponse.body.user.id;
 
-    // Create a test post
     const post = await Post.create({
       author: new mongoose.Types.ObjectId(userId),
       title: 'Test Post',
@@ -35,7 +33,6 @@ describe('Social API', () => {
   describe('Comments', () => {
     describe('GET /api/social/posts/:postId/comments', () => {
       beforeEach(async () => {
-        // Create some comments
         for (let i = 0; i < 3; i++) {
           await Comment.create({
             postId: new mongoose.Types.ObjectId(postId),
@@ -72,7 +69,6 @@ describe('Social API', () => {
         expect(response.status).toBe(201);
         expect(response.body.comment.text).toBe('Great post!');
 
-        // Verify comments count was updated
         const post = await Post.findById(postId);
         expect(post?.commentsCount).toBe(1);
       });
@@ -131,7 +127,6 @@ describe('Social API', () => {
       let commentId: string;
 
       beforeEach(async () => {
-        // Update post comments count first
         await Post.findByIdAndUpdate(postId, { commentsCount: 1 });
 
         const comment = await Comment.create({
@@ -149,7 +144,6 @@ describe('Social API', () => {
 
         expect(response.status).toBe(200);
 
-        // Verify comment was deleted
         const comment = await Comment.findById(commentId);
         expect(comment).toBeNull();
       });
@@ -166,18 +160,15 @@ describe('Social API', () => {
         expect(response.status).toBe(201);
         expect(response.body.likesCount).toBe(1);
 
-        // Verify like was created
         const like = await Like.findOne({ postId, userId });
         expect(like).toBeDefined();
       });
 
       it('should reject duplicate like', async () => {
-        // First like
         await request(app)
           .post(`/api/social/posts/${postId}/like`)
           .set('Authorization', `Bearer ${accessToken}`);
 
-        // Second like attempt
         const response = await request(app)
           .post(`/api/social/posts/${postId}/like`)
           .set('Authorization', `Bearer ${accessToken}`);
@@ -195,7 +186,6 @@ describe('Social API', () => {
 
     describe('DELETE /api/social/posts/:postId/like', () => {
       beforeEach(async () => {
-        // Create a like first
         await Like.create({
           postId: new mongoose.Types.ObjectId(postId),
           userId: new mongoose.Types.ObjectId(userId),
@@ -211,13 +201,11 @@ describe('Social API', () => {
         expect(response.status).toBe(200);
         expect(response.body.likesCount).toBe(0);
 
-        // Verify like was deleted
         const like = await Like.findOne({ postId, userId });
         expect(like).toBeNull();
       });
 
       it('should return 404 if not liked', async () => {
-        // Remove the like first
         await Like.deleteOne({ postId, userId });
 
         const response = await request(app)
@@ -230,7 +218,6 @@ describe('Social API', () => {
 
     describe('GET /api/social/posts/:postId/like', () => {
       it('should return liked: true when post is liked', async () => {
-        // Create a like
         await Like.create({
           postId: new mongoose.Types.ObjectId(postId),
           userId: new mongoose.Types.ObjectId(userId),
@@ -256,7 +243,6 @@ describe('Social API', () => {
 
     describe('GET /api/social/likes', () => {
       it('should get user liked posts', async () => {
-        // Create some likes
         for (let i = 0; i < 3; i++) {
           const post = await Post.create({
             author: new mongoose.Types.ObjectId(userId),

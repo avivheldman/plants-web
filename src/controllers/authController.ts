@@ -12,9 +12,9 @@ import { AuthRequest } from '../middleware/auth';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, firstName, lastName } = req.body;
+    const { email, password, displayName } = req.body;
 
-    if (!email || !password || !firstName || !lastName) {
+    if (!email || !password || !displayName) {
       res.status(400).json({ error: 'All fields are required' });
       return;
     }
@@ -28,8 +28,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const user = new User({
       email: email.toLowerCase(),
       password,
-      firstName,
-      lastName,
+      displayName,
     });
 
     await user.save();
@@ -46,9 +45,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       user: {
         id: user._id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profilePhoto: user.profilePhoto,
+        displayName: user.displayName,
+        photoUrl: user.photoUrl,
       },
       ...tokens,
     });
@@ -97,9 +95,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user: {
         id: user._id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profilePhoto: user.profilePhoto,
+        displayName: user.displayName,
+        photoUrl: user.photoUrl,
       },
       ...tokens,
     });
@@ -172,16 +169,13 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Remove old refresh token
     await removeRefreshToken(user._id.toString(), refreshToken);
 
-    // Generate new tokens
     const tokens = generateTokens({
       userId: user._id.toString(),
       email: user.email,
     });
 
-    // Save new refresh token
     await saveRefreshToken(user._id.toString(), tokens.refreshToken);
 
     res.json({
@@ -208,7 +202,6 @@ export const googleCallback = async (req: AuthRequest, res: Response): Promise<v
 
     await saveRefreshToken(req.user._id.toString(), tokens.refreshToken);
 
-    // Redirect to frontend with tokens
     const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     res.redirect(
       `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
@@ -233,7 +226,6 @@ export const facebookCallback = async (req: AuthRequest, res: Response): Promise
 
     await saveRefreshToken(req.user._id.toString(), tokens.refreshToken);
 
-    // Redirect to frontend with tokens
     const frontendUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     res.redirect(
       `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`

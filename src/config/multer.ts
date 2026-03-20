@@ -39,7 +39,7 @@ export const uploadProfilePhoto = multer({
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB
   },
-}).single('profilePhoto');
+}).single('photoUrl');
 
 export const uploadPostImage = multer({
   storage,

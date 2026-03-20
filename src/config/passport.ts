@@ -5,7 +5,6 @@ import User, { IUser } from '../models/User';
 
 type DoneCallback = (error: Error | null, user?: IUser | false) => void;
 
-// Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(
     new GoogleStrategy(
@@ -28,28 +27,23 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             return done(new Error('No email provided by Google'));
           }
 
-          // Check if user exists with Google ID
           let user = await User.findOne({ googleId: profile.id });
 
           if (!user) {
-            // Check if user exists with email
             user = await User.findOne({ email: email.toLowerCase() });
 
             if (user) {
-              // Link Google account to existing user
               user.googleId = profile.id;
-              if (!user.profilePhoto && profile.photos?.[0]?.value) {
-                user.profilePhoto = profile.photos[0].value;
+              if (!user.photoUrl && profile.photos?.[0]?.value) {
+                user.photoUrl = profile.photos[0].value;
               }
               await user.save();
             } else {
-              // Create new user
               user = new User({
                 email: email.toLowerCase(),
                 googleId: profile.id,
-                firstName: profile.name?.givenName || profile.displayName?.split(' ')[0] || 'User',
-                lastName: profile.name?.familyName || profile.displayName?.split(' ').slice(1).join(' ') || '',
-                profilePhoto: profile.photos?.[0]?.value,
+                displayName: profile.displayName || 'User',
+                photoUrl: profile.photos?.[0]?.value,
               });
               await user.save();
             }
@@ -64,7 +58,6 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-// Facebook OAuth Strategy
 if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   passport.use(
     new FacebookStrategy(
@@ -87,28 +80,26 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
             return done(new Error('No email provided by Facebook'));
           }
 
-          // Check if user exists with Facebook ID
           let user = await User.findOne({ facebookId: profile.id });
 
           if (!user) {
-            // Check if user exists with email
             user = await User.findOne({ email: email.toLowerCase() });
 
             if (user) {
-              // Link Facebook account to existing user
               user.facebookId = profile.id;
-              if (!user.profilePhoto && profile.photos?.[0]?.value) {
-                user.profilePhoto = profile.photos[0].value;
+              if (!user.photoUrl && profile.photos?.[0]?.value) {
+                user.photoUrl = profile.photos[0].value;
               }
               await user.save();
             } else {
-              // Create new user
+              const name = profile.name
+                ? `${profile.name.givenName || ''} ${profile.name.familyName || ''}`.trim()
+                : 'User';
               user = new User({
                 email: email.toLowerCase(),
                 facebookId: profile.id,
-                firstName: profile.name?.givenName || 'User',
-                lastName: profile.name?.familyName || '',
-                profilePhoto: profile.photos?.[0]?.value,
+                displayName: name,
+                photoUrl: profile.photos?.[0]?.value,
               });
               await user.save();
             }
@@ -123,12 +114,10 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   );
 }
 
-// Serialize user
 passport.serializeUser((user, done) => {
   done(null, (user as IUser)._id);
 });
 
-// Deserialize user
 passport.deserializeUser(async (id: string, done) => {
   try {
     const user = await User.findById(id);

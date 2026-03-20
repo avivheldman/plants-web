@@ -10,8 +10,7 @@ describe('Auth API', () => {
         .send({
           email: 'test@example.com',
           password: 'password123',
-          firstName: 'Test',
-          lastName: 'User',
+          displayName: 'Test User',
         });
 
       expect(response.status).toBe(201);
@@ -36,8 +35,7 @@ describe('Auth API', () => {
       await User.create({
         email: 'test@example.com',
         password: 'password123',
-        firstName: 'Test',
-        lastName: 'User',
+        displayName: 'Test User',
       });
 
       const response = await request(app)
@@ -45,8 +43,7 @@ describe('Auth API', () => {
         .send({
           email: 'test@example.com',
           password: 'newpassword',
-          firstName: 'New',
-          lastName: 'User',
+          displayName: 'New User',
         });
 
       expect(response.status).toBe(409);
@@ -59,8 +56,7 @@ describe('Auth API', () => {
       await User.create({
         email: 'test@example.com',
         password: 'password123',
-        firstName: 'Test',
-        lastName: 'User',
+        displayName: 'Test User',
       });
     });
 
@@ -112,8 +108,7 @@ describe('Auth API', () => {
         .send({
           email: 'test@example.com',
           password: 'password123',
-          firstName: 'Test',
-          lastName: 'User',
+          displayName: 'Test User',
         });
 
       refreshToken = registerResponse.body.refreshToken;
@@ -148,8 +143,7 @@ describe('Auth API', () => {
         .send({
           email: 'test@example.com',
           password: 'password123',
-          firstName: 'Test',
-          lastName: 'User',
+          displayName: 'Test User',
         });
 
       accessToken = registerResponse.body.accessToken;
