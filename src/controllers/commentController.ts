@@ -93,10 +93,10 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
   }
 };
 
-// Delete a comment
-export const deleteComment = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateComment = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { postId, commentId } = req.params;
+    const { commentId } = req.params;
+    const { text } = req.body;
     const user = req.user;
 
     if (!user) {
@@ -104,8 +104,59 @@ export const deleteComment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(postId) || !mongoose.Types.ObjectId.isValid(commentId)) {
-      res.status(400).json({ success: false, message: 'Invalid ID' });
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      res.status(400).json({ success: false, message: 'Invalid comment ID' });
+      return;
+    }
+
+    if (!text || !text.trim()) {
+      res.status(400).json({ success: false, message: 'Comment text is required' });
+      return;
+    }
+
+    if (text.length > 1000) {
+      res.status(400).json({ success: false, message: 'Comment text too long (max 1000 characters)' });
+      return;
+    }
+
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+      res.status(404).json({ success: false, message: 'Comment not found' });
+      return;
+    }
+
+    if (comment.userId.toString() !== user._id.toString()) {
+      res.status(403).json({ success: false, message: 'Not authorized to update this comment' });
+      return;
+    }
+
+    comment.text = text.trim();
+    await comment.save();
+
+    const updated = await Comment.findById(commentId)
+      .populate('userId', 'displayName photoUrl')
+      .lean();
+
+    res.json({ success: true, comment: updated });
+  } catch (error) {
+    console.error('Error updating comment:', error);
+    res.status(500).json({ success: false, message: 'Failed to update comment' });
+  }
+};
+
+export const deleteComment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { commentId } = req.params;
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+      res.status(400).json({ success: false, message: 'Invalid comment ID' });
       return;
     }
 
@@ -121,8 +172,7 @@ export const deleteComment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Decrement post comment count
-    const post = await Post.findById(postId);
+    const post = await Post.findById(comment.postId);
     if (post) {
       post.commentsCount = Math.max(0, post.commentsCount - 1);
       await post.save();
