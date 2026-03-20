@@ -5,9 +5,8 @@ export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
   email: string;
   password?: string;
-  firstName: string;
-  lastName: string;
-  profilePhoto?: string;
+  displayName: string;
+  photoUrl?: string;
   googleId?: string;
   facebookId?: string;
   refreshTokens: string[];
@@ -31,19 +30,13 @@ const userSchema = new Schema<IUser>(
       minlength: 6,
       select: false,
     },
-    firstName: {
+    displayName: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 50,
+      maxlength: 100,
     },
-    lastName: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 50,
-    },
-    profilePhoto: {
+    photoUrl: {
       type: String,
       default: null,
     },
@@ -71,7 +64,6 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// Hash password before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password') || !this.password) {
     return next();
@@ -82,13 +74,11 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Index for efficient queries
 userSchema.index({ email: 1 });
 userSchema.index({ googleId: 1 });
 userSchema.index({ facebookId: 1 });
