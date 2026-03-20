@@ -1,4 +1,4 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import socialRoutes from './routes/socialRoutes';
 import postRoutes from './routes/postRoutes';
+import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 
 // Create Express application
 const app: Application = express();
@@ -59,15 +60,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/social', socialRoutes);
 app.use('/api/posts', postRoutes);
 
-// 404 handler
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({ error: 'Not Found' });
-});
-
-// Global error handler
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('Error:', err.message);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 export default app;

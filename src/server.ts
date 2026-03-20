@@ -1,34 +1,41 @@
 import dotenv from 'dotenv';
 
-// Load environment variables first
 dotenv.config();
 
 import app from './app';
+import { connectDatabase } from './config/database';
 
 const PORT = process.env.PORT || 3000;
 
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
+const startServer = async () => {
+  await connectDatabase();
+
+  const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+  });
+
+  return server;
+};
+
+const server = startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });
 
-// Graceful shutdown handlers
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed.');
-    process.exit(0);
-  });
-});
+import { disconnectDatabase } from './config/database';
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed.');
-    process.exit(0);
-  });
-});
+const shutdown = async () => {
+  const s = await server;
+  if (s && typeof s.close === 'function') {
+    s.close(() => {
+      disconnectDatabase().then(() => process.exit(0));
+    });
+  }
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 export default server;
