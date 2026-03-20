@@ -6,12 +6,8 @@ import {
   createPost,
   updatePost,
   deletePost,
-  likePost,
-  unlikePost,
-  checkLiked,
 } from '../controllers/postController';
-import { getComments, createComment, deleteComment } from '../controllers/commentController';
-import { authMiddleware } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import { upload } from '../middleware/upload';
 
 const router = Router();
@@ -127,7 +123,7 @@ router.get('/user/:userId', getPostsByUser);
  *       401:
  *         description: Unauthorized
  */
-router.post('/', authMiddleware, upload.single('image'), createPost);
+router.post('/', authenticate, upload.single('image'), createPost);
 
 /**
  * @swagger
@@ -168,7 +164,7 @@ router.post('/', authMiddleware, upload.single('image'), createPost);
  *       404:
  *         description: Post not found
  */
-router.put('/:id', authMiddleware, upload.single('image'), updatePost);
+router.put('/:id', authenticate, upload.single('image'), updatePost);
 
 /**
  * @swagger
@@ -192,174 +188,6 @@ router.put('/:id', authMiddleware, upload.single('image'), updatePost);
  *       404:
  *         description: Post not found
  */
-router.delete('/:id', authMiddleware, deletePost);
-
-/**
- * @swagger
- * /posts/{id}/like:
- *   post:
- *     summary: Like a post
- *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Post liked successfully
- *       400:
- *         description: Post already liked
- *       404:
- *         description: Post not found
- */
-router.post('/:id/like', authMiddleware, likePost);
-
-/**
- * @swagger
- * /posts/{id}/like:
- *   delete:
- *     summary: Unlike a post
- *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Post unliked successfully
- *       400:
- *         description: Post not liked
- *       404:
- *         description: Post not found
- */
-router.delete('/:id/like', authMiddleware, unlikePost);
-
-/**
- * @swagger
- * /posts/{id}/liked:
- *   get:
- *     summary: Check if user liked a post
- *     tags: [Posts]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Like status
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 liked:
- *                   type: boolean
- */
-router.get('/:id/liked', authMiddleware, checkLiked);
-
-/**
- * @swagger
- * /posts/{postId}/comments:
- *   get:
- *     summary: Get comments for a post
- *     tags: [Comments]
- *     security: []
- *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *         schema:
- *           type: string
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: List of comments
- */
-router.get('/:postId/comments', getComments);
-
-/**
- * @swagger
- * /posts/{postId}/comments:
- *   post:
- *     summary: Create a comment on a post
- *     tags: [Comments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - text
- *             properties:
- *               text:
- *                 type: string
- *     responses:
- *       201:
- *         description: Comment created successfully
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Post not found
- */
-router.post('/:postId/comments', authMiddleware, createComment);
-
-/**
- * @swagger
- * /posts/{postId}/comments/{commentId}:
- *   delete:
- *     summary: Delete a comment
- *     tags: [Comments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: postId
- *         required: true
- *         schema:
- *           type: string
- *       - in: path
- *         name: commentId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Comment deleted successfully
- *       403:
- *         description: Not authorized
- *       404:
- *         description: Comment not found
- */
-router.delete('/:postId/comments/:commentId', authMiddleware, deleteComment);
+router.delete('/:id', authenticate, deletePost);
 
 export default router;
