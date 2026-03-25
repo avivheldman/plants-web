@@ -1,11 +1,8 @@
 // User type for authentication and profile
 export interface User {
-  _id: string;
+  id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  displayName?: string;
-  profilePhoto?: string;
+  displayName: string;
   photoUrl?: string;
   createdAt: string;
   updatedAt?: string;
