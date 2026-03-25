@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { ImageUpload } from '../components';
 import { useAuth } from '../contexts';
-import { Post, User } from '../types';
+import { Post, User, getUserId } from '../types';
 import '../styles/CreatePostPage.css';
 
 const EditPostPage = () => {
@@ -35,7 +35,7 @@ const EditPostPage = () => {
           const author = post.author as User;
 
           // Check if user is the owner
-          if (!user || user._id !== author._id) {
+          if (!user || getUserId(user) !== getUserId(author)) {
             setUnauthorized(true);
             return;
           }

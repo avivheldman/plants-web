@@ -1,11 +1,16 @@
 // User type for authentication and profile
 export interface User {
-  id: string;
+  _id?: string;
+  id?: string;
   email: string;
   displayName: string;
   photoUrl?: string;
   createdAt: string;
   updatedAt?: string;
+}
+
+export function getUserId(user: User): string {
+  return user.id || user._id || '';
 }
 
 // Post type for the feed

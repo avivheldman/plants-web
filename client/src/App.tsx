@@ -9,6 +9,7 @@ import EditProfilePage from './pages/EditProfilePage';
 import FeedPage from './pages/FeedPage';
 import CreatePostPage from './pages/CreatePostPage';
 import PostDetailPage from './pages/PostDetailPage';
+import EditPostPage from './pages/EditPostPage';
 import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import NotFoundPage from './pages/NotFoundPage';
 import './App.css';
@@ -40,6 +41,11 @@ function App() {
             <Route path="posts/create" element={
               <ProtectedRoute>
                 <CreatePostPage />
+              </ProtectedRoute>
+            } />
+            <Route path="posts/:postId/edit" element={
+              <ProtectedRoute>
+                <EditPostPage />
               </ProtectedRoute>
             } />
             <Route path="auth/callback" element={<OAuthCallbackPage />} />
