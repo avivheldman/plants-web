@@ -50,13 +50,13 @@ const EditProfilePage = () => {
         formData.append('removePhoto', 'true');
       }
 
-      const response = await api.put<User>('/users/profile', formData, {
+      const response = await api.put<{ user: User }>('/users/profile', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      updateUser(response.data);
+      updateUser(response.data.user);
       navigate('/profile');
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
