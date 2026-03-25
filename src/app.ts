@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import socialRoutes from './routes/socialRoutes';
 import postRoutes from './routes/postRoutes';
+import searchRoutes from './routes/searchRoutes';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 
 // Create Express application
@@ -59,6 +60,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/social', socialRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/search', searchRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
