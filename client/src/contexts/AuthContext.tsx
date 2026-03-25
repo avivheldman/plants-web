@@ -11,6 +11,7 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (user: User) => void;
   googleLogin: () => void;
+  facebookLogin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,8 +32,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
         try {
-          const response = await api.get<User>('/auth/me');
-          setUser(response.data);
+          const response = await api.get<{ user: User }>('/auth/me');
+          setUser(response.data.user);
         } catch {
           // Token invalid, clear storage
           localStorage.removeItem('accessToken');
@@ -82,6 +83,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     window.location.href = `${apiUrl}/auth/google`;
   }, []);
 
+  const facebookLogin = useCallback(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    window.location.href = `${apiUrl}/auth/facebook`;
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -93,6 +99,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logout,
         updateUser,
         googleLogin,
+        facebookLogin,
       }}
     >
       {children}
