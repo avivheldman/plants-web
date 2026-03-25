@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts';
 import api from '../services/api';
-import { Post } from '../types';
+import { Post, getUserId } from '../types';
 import '../styles/ProfilePage.css';
 
 const ProfilePage = () => {
@@ -14,7 +14,8 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUserPosts = async () => {
       try {
-        const response = await api.get<{ data: Post[] }>(`/posts/user/${user?._id}`);
+        const userId = user ? getUserId(user) : '';
+        const response = await api.get<{ data: Post[] }>(`/posts/user/${userId}`);
         setPosts(response.data.data || []);
       } catch {
         setError('Failed to load posts');
@@ -23,10 +24,10 @@ const ProfilePage = () => {
       }
     };
 
-    if (user?._id) {
+    if (user) {
       fetchUserPosts();
     }
-  }, [user?._id]);
+  }, [user]);
 
   if (!user) {
     return <div className="profile-loading">Loading...</div>;
@@ -94,15 +95,15 @@ const ProfilePage = () => {
                 key={post._id}
                 className="profile-post-card"
               >
-                {post.imageUrl ? (
+                {post.image ? (
                   <img
-                    src={post.imageUrl}
-                    alt={post.text.substring(0, 30)}
+                    src={post.image}
+                    alt={post.title}
                     className="post-card-image"
                   />
                 ) : (
                   <div className="post-card-text-preview">
-                    <p>{post.text}</p>
+                    <p>{post.title}</p>
                   </div>
                 )}
                 <div className="post-card-overlay">
