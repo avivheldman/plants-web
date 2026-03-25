@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { ImageUpload } from '../components';
 import '../styles/CreatePostPage.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const CreatePostPage = () => {
   const navigate = useNavigate();
@@ -49,7 +47,7 @@ const CreatePostPage = () => {
         formData.append('image', image);
       }
 
-      const response = await axios.post(`${API_URL}/posts`, formData, {
+      const response = await api.post('/posts', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
