@@ -9,6 +9,7 @@ import EditProfilePage from './pages/EditProfilePage';
 import FeedPage from './pages/FeedPage';
 import CreatePostPage from './pages/CreatePostPage';
 import PostDetailPage from './pages/PostDetailPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 import NotFoundPage from './pages/NotFoundPage';
 import './App.css';
 
@@ -41,6 +42,7 @@ function App() {
                 <CreatePostPage />
               </ProtectedRoute>
             } />
+            <Route path="auth/callback" element={<OAuthCallbackPage />} />
             <Route path="posts/:postId" element={<PostDetailPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
