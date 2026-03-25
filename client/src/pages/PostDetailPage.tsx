@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../contexts';
-import { Post, Comment, User } from '../types';
+import { Post, Comment, User, getUserId } from '../types';
 import '../styles/PostDetailPage.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
 const PostDetailPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const [post, setPost] = useState<Post | null>(null);
@@ -28,8 +26,8 @@ const PostDetailPage = () => {
       try {
         setIsLoading(true);
         const [postResponse, commentsResponse] = await Promise.all([
-          axios.get(`${API_URL}/posts/${id}`),
-          axios.get(`${API_URL}/posts/${id}/comments?page=1&limit=20`),
+          api.get(`/posts/${postId}`),
+          api.get(`/social/posts/${postId}/comments?page=1&limit=20`),
         ]);
 
         if (postResponse.data.success) {
@@ -42,13 +40,12 @@ const PostDetailPage = () => {
           setHasMoreComments(commentsResponse.data.hasMore);
         }
 
-        // Check if user liked the post
         if (isAuthenticated) {
           try {
-            const likeResponse = await axios.get(`${API_URL}/posts/${id}/liked`);
+            const likeResponse = await api.get(`/social/posts/${postId}/like`);
             setLiked(likeResponse.data.liked);
           } catch {
-            // Ignore error
+            // Ignore
           }
         }
       } catch (err) {
@@ -59,10 +56,10 @@ const PostDetailPage = () => {
       }
     };
 
-    if (id) {
+    if (postId) {
       fetchPost();
     }
-  }, [id, isAuthenticated]);
+  }, [postId, isAuthenticated]);
 
   const handleLike = async () => {
     if (!isAuthenticated || isLiking) return;
@@ -71,18 +68,16 @@ const PostDetailPage = () => {
     const wasLiked = liked;
     const prevCount = likesCount;
 
-    // Optimistic update
     setLiked(!liked);
     setLikesCount(liked ? likesCount - 1 : likesCount + 1);
 
     try {
       if (wasLiked) {
-        await axios.delete(`${API_URL}/posts/${id}/like`);
+        await api.delete(`/social/posts/${postId}/like`);
       } else {
-        await axios.post(`${API_URL}/posts/${id}/like`);
+        await api.post(`/social/posts/${postId}/like`);
       }
     } catch {
-      // Revert on error
       setLiked(wasLiked);
       setLikesCount(prevCount);
     } finally {
@@ -96,7 +91,7 @@ const PostDetailPage = () => {
 
     setIsSubmittingComment(true);
     try {
-      const response = await axios.post(`${API_URL}/posts/${id}/comments`, {
+      const response = await api.post(`/social/posts/${postId}/comments`, {
         text: commentText.trim(),
       });
 
@@ -116,7 +111,7 @@ const PostDetailPage = () => {
 
   const handleDeleteComment = async (commentId: string) => {
     try {
-      await axios.delete(`${API_URL}/posts/${id}/comments/${commentId}`);
+      await api.delete(`/social/comments/${commentId}`);
       setComments((prev) => prev.filter((c) => c._id !== commentId));
       if (post) {
         setPost({ ...post, commentsCount: Math.max(0, post.commentsCount - 1) });
@@ -129,8 +124,8 @@ const PostDetailPage = () => {
   const loadMoreComments = async () => {
     try {
       const nextPage = commentsPage + 1;
-      const response = await axios.get(
-        `${API_URL}/posts/${id}/comments?page=${nextPage}&limit=20`
+      const response = await api.get(
+        `/social/posts/${postId}/comments?page=${nextPage}&limit=20`
       );
 
       if (response.data.success) {
@@ -147,7 +142,7 @@ const PostDetailPage = () => {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
-      await axios.delete(`${API_URL}/posts/${id}`);
+      await api.delete(`/posts/${postId}`);
       navigate('/feed');
     } catch (err) {
       console.error('Error deleting post:', err);
@@ -184,14 +179,15 @@ const PostDetailPage = () => {
   }
 
   const author = typeof post.author === 'object' ? post.author as User : null;
-  const isOwner = user && author && user._id === author._id;
+  const authorId = author ? getUserId(author) : '';
+  const isOwner = user && author && getUserId(user) === authorId;
 
   return (
     <div className="post-detail-page">
       <div className="post-detail-container">
         <article className="post-detail">
           <header className="post-detail-header">
-            <Link to={`/profile/${author?._id || ''}`} className="author-info">
+            <Link to={`/profile/${authorId}`} className="author-info">
               {author?.photoUrl ? (
                 <img src={author.photoUrl} alt={author.displayName} className="author-avatar" />
               ) : (
@@ -293,13 +289,14 @@ const PostDetailPage = () => {
             ) : (
               comments.map((comment) => {
                 const commentAuthor = comment.author as User | undefined;
-                const isCommentOwner = user && commentAuthor && user._id === commentAuthor._id;
+                const commentAuthorId = commentAuthor ? getUserId(commentAuthor) : '';
+                const isCommentOwner = user && commentAuthor && getUserId(user) === commentAuthorId;
 
                 return (
                   <div key={comment._id} className="comment">
                     <div className="comment-header">
                       <Link
-                        to={`/profile/${commentAuthor?._id || ''}`}
+                        to={`/profile/${commentAuthorId}`}
                         className="comment-author"
                       >
                         {commentAuthor?.photoUrl ? (
