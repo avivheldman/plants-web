@@ -1,118 +1,175 @@
 import request from 'supertest';
 import app from '../app';
-import Post from '../models/Post';
-import User from '../models/User';
-import mongoose from 'mongoose';
+import { createAuthenticatedUser } from './setup';
 
-describe('Post API', () => {
+describe('Post Endpoints', () => {
   let accessToken: string;
   let userId: string;
 
   beforeEach(async () => {
-    const registerResponse = await request(app)
-      .post('/api/auth/register')
-      .send({
-        email: 'test@example.com',
-        password: 'password123',
-        displayName: 'Test User',
-      });
-
-    accessToken = registerResponse.body.tokens.accessToken;
-    userId = registerResponse.body.user.id;
+    const auth = await createAuthenticatedUser();
+    accessToken = auth.accessToken;
+    userId = auth.userId;
   });
 
-  describe('Post Model', () => {
+  describe('POST /api/posts', () => {
     it('should create a post', async () => {
-      const post = await Post.create({
-        author: new mongoose.Types.ObjectId(userId),
-        title: 'Test Post',
-        content: 'Test content for the post',
-        plantName: 'Rose',
-        tags: ['flower', 'outdoor'],
-      });
+      const res = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('title', 'My Plant')
+        .field('content', 'A beautiful monstera');
 
-      expect(post.title).toBe('Test Post');
-      expect(post.content).toBe('Test content for the post');
-      expect(post.plantName).toBe('Rose');
-      expect(post.tags).toEqual(['flower', 'outdoor']);
-      expect(post.likesCount).toBe(0);
-      expect(post.commentsCount).toBe(0);
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.title).toBe('My Plant');
+      expect(res.body.data.content).toBe('A beautiful monstera');
+      expect(res.body.data.author).toBeDefined();
     });
 
-    it('should require title and content', async () => {
-      await expect(
-        Post.create({
-          author: new mongoose.Types.ObjectId(userId),
-        })
-      ).rejects.toThrow();
+    it('should reject post without title', async () => {
+      const res = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('content', 'No title here');
+
+      expect(res.status).toBe(400);
     });
 
-    it('should enforce maxlength on title', async () => {
-      await expect(
-        Post.create({
-          author: new mongoose.Types.ObjectId(userId),
-          title: 'a'.repeat(201),
-          content: 'Test content',
-        })
-      ).rejects.toThrow();
+    it('should reject unauthenticated request', async () => {
+      const res = await request(app)
+        .post('/api/posts')
+        .field('title', 'Test')
+        .field('content', 'Test');
+
+      expect(res.status).toBe(401);
     });
   });
 
-  describe('Post Queries', () => {
+  describe('GET /api/posts', () => {
     beforeEach(async () => {
-      for (let i = 0; i < 5; i++) {
-        await Post.create({
-          author: new mongoose.Types.ObjectId(userId),
-          title: `Post ${i}`,
-          content: `Content ${i}`,
-          tags: i % 2 === 0 ? ['even'] : ['odd'],
-        });
+      for (let i = 0; i < 3; i++) {
+        await request(app)
+          .post('/api/posts')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .field('title', `Post ${i}`)
+          .field('content', `Content ${i}`);
       }
     });
 
-    it('should find posts by author', async () => {
-      const posts = await Post.find({ author: userId });
-      expect(posts.length).toBe(5);
+    it('should list posts with pagination', async () => {
+      const res = await request(app).get('/api/posts?page=1&limit=2');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBe(2);
+      expect(res.body.total).toBe(3);
+      expect(res.body.hasMore).toBe(true);
     });
 
-    it('should find posts by tags', async () => {
-      const evenPosts = await Post.find({ tags: 'even' });
-      expect(evenPosts.length).toBe(3);
+    it('should return second page', async () => {
+      const res = await request(app).get('/api/posts?page=2&limit=2');
 
-      const oddPosts = await Post.find({ tags: 'odd' });
-      expect(oddPosts.length).toBe(2);
-    });
-
-    it('should sort posts by createdAt', async () => {
-      const posts = await Post.find().sort({ createdAt: -1 });
-      expect(posts.length).toBe(5);
-      expect(posts[0].title).toBe('Post 4');
-    });
-
-    it('should paginate posts', async () => {
-      const page1 = await Post.find().limit(2).skip(0);
-      const page2 = await Post.find().limit(2).skip(2);
-
-      expect(page1.length).toBe(2);
-      expect(page2.length).toBe(2);
+      expect(res.status).toBe(200);
+      expect(res.body.data.length).toBe(1);
+      expect(res.body.hasMore).toBe(false);
     });
   });
 
-  describe('Post with Author Population', () => {
-    it('should populate author details', async () => {
-      const post = await Post.create({
-        author: new mongoose.Types.ObjectId(userId),
-        title: 'Test Post',
-        content: 'Test content',
-      });
+  describe('GET /api/posts/:id', () => {
+    it('should get a single post', async () => {
+      const createRes = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('title', 'Single Post')
+        .field('content', 'Details here');
 
-      const populatedPost = await Post.findById(post._id).populate(
-        'author',
-        'displayName photoUrl'
-      );
+      const postId = createRes.body.data._id;
 
-      expect(populatedPost?.author).toBeDefined();
-      expect((populatedPost?.author as unknown as { displayName: string }).displayName).toBe('Test User');
+      const res = await request(app).get(`/api/posts/${postId}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.title).toBe('Single Post');
+    });
+
+    it('should return 404 for non-existent post', async () => {
+      const res = await request(app).get('/api/posts/507f1f77bcf86cd799439011');
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('PUT /api/posts/:id', () => {
+    it('should update own post', async () => {
+      const createRes = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('title', 'Original')
+        .field('content', 'Original content');
+
+      const postId = createRes.body.data._id;
+
+      const res = await request(app)
+        .put(`/api/posts/${postId}`)
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('title', 'Updated Title');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.title).toBe('Updated Title');
+    });
+
+    it('should reject update from another user', async () => {
+      const createRes = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('title', 'Mine')
+        .field('content', 'My post');
+
+      const postId = createRes.body.data._id;
+
+      const other = await createAuthenticatedUser({ email: 'other@example.com' });
+
+      const res = await request(app)
+        .put(`/api/posts/${postId}`)
+        .set('Authorization', `Bearer ${other.accessToken}`)
+        .field('title', 'Hacked');
+
+      expect(res.status).toBe(403);
+    });
+  });
+
+  describe('DELETE /api/posts/:id', () => {
+    it('should delete own post', async () => {
+      const createRes = await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('title', 'To Delete')
+        .field('content', 'Bye');
+
+      const postId = createRes.body.data._id;
+
+      const res = await request(app)
+        .delete(`/api/posts/${postId}`)
+        .set('Authorization', `Bearer ${accessToken}`);
+
+      expect(res.status).toBe(200);
+
+      const getRes = await request(app).get(`/api/posts/${postId}`);
+      expect(getRes.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/posts/user/:userId', () => {
+    it('should get posts by user', async () => {
+      await request(app)
+        .post('/api/posts')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .field('title', 'User Post')
+        .field('content', 'Content');
+
+      const res = await request(app).get(`/api/posts/user/${userId}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.length).toBe(1);
     });
   });
 });
