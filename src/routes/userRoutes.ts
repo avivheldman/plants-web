@@ -12,7 +12,6 @@ import { uploadProfilePhoto } from '../config/multer';
 
 const router = Router();
 
-// Multer error handler wrapper
 const handleMulterUpload = (req: Request, res: Response, next: NextFunction) => {
   uploadProfilePhoto(req, res, (err: unknown) => {
     if (err) {
@@ -29,17 +28,138 @@ const handleMulterUpload = (req: Request, res: Response, next: NextFunction) => 
   });
 };
 
-// All routes require authentication
 router.use(authenticate);
 
-// Profile routes
+/**
+ * @swagger
+ * /users/profile:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile data
+ *       401:
+ *         description: Not authenticated
+ */
 router.get('/profile', getProfile);
+
+/**
+ * @swagger
+ * /users/profile:
+ *   put:
+ *     summary: Update current user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               displayName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *       401:
+ *         description: Not authenticated
+ */
 router.put('/profile', updateProfile);
+
+/**
+ * @swagger
+ * /users/profile/photo:
+ *   post:
+ *     summary: Upload profile photo
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               photoUrl:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Photo uploaded
+ *       400:
+ *         description: Invalid file
+ */
 router.post('/profile/photo', handleMulterUpload, uploadPhoto);
+
+/**
+ * @swagger
+ * /users/profile/photo:
+ *   delete:
+ *     summary: Delete profile photo
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Photo deleted
+ *       401:
+ *         description: Not authenticated
+ */
 router.delete('/profile/photo', deletePhoto);
+
+/**
+ * @swagger
+ * /users/password:
+ *   put:
+ *     summary: Change password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 6
+ *     responses:
+ *       200:
+ *         description: Password changed
+ *       400:
+ *         description: Invalid current password
+ */
 router.put('/password', changePassword);
 
-// Get other user's public profile
+/**
+ * @swagger
+ * /users/{userId}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User data
+ *       404:
+ *         description: User not found
+ */
 router.get('/:userId', getUserById);
 
 export default router;
