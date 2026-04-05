@@ -145,3 +145,6 @@ DEVELOPMENT_PLAN.md
 # Uploaded files (keep .gitkeep)
 uploads/*
 !uploads/.gitkeep
+
+# SSL certificates
+certs/
