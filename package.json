@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest --coverage",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "start:prod": "NODE_ENV=production node dist/server.js",
+    "generate-cert": "bash scripts/generate-cert.sh"
   },
   "repository": {
     "type": "git",
