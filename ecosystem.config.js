@@ -3,11 +3,12 @@ module.exports = {
     {
       name: 'plants-web-api',
       script: 'dist/server.js',
-      instances: 'max',
+      cwd: '/home/node76/apps/plants-web',
+      instances: 2,
       exec_mode: 'cluster',
       autorestart: true,
       watch: false,
-      max_memory_restart: '1G',
+      max_memory_restart: '512M',
       env: {
         NODE_ENV: 'development',
         PORT: 3000,
@@ -23,17 +24,4 @@ module.exports = {
       time: true,
     },
   ],
-
-  deploy: {
-    production: {
-      user: 'deploy',
-      host: ['your-server.com'],
-      ref: 'origin/main',
-      repo: 'git@github.com:your-repo/plants-web.git',
-      path: '/var/www/plants-web',
-      'pre-deploy-local': '',
-      'post-deploy': 'npm ci && npm run build && pm2 reload ecosystem.config.js --env production',
-      'pre-setup': '',
-    },
-  },
 };
