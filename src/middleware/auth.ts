@@ -2,6 +2,13 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, TokenPayload } from '../services/tokenService';
 import User, { IUser } from '../models/User';
 
+declare global {
+  namespace Express {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    interface User extends IUser {}
+  }
+}
+
 export interface AuthRequest extends Request {
   user?: IUser;
   tokenPayload?: TokenPayload;
@@ -46,7 +53,7 @@ export const authenticate = async (
 
 export const optionalAuth = async (
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {

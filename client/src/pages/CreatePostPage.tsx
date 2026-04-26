@@ -135,7 +135,7 @@ const CreatePostPage = () => {
             <ImageUpload
               onImageSelect={handleImageSelect}
               label="Add an image to your post"
-              maxSize={10 * 1024 * 1024}
+              maxSizeMB={10}
             />
           </div>
 

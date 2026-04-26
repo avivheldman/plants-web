@@ -4,7 +4,7 @@ import { useAuth } from '../contexts';
 import { useFormValidation } from '../hooks';
 import ImageUpload from '../components/ImageUpload';
 import api from '../services/api';
-import { User } from '../types';
+import type { User } from '../types';
 import '../styles/EditProfilePage.css';
 
 const EditProfilePage = () => {

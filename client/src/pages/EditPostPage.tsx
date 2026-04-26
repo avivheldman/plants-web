@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { ImageUpload } from '../components';
 import { useAuth } from '../contexts';
-import { Post, User, getUserId } from '../types';
+import { getUserId } from '../types';
+import type { Post, User } from '../types';
 import '../styles/CreatePostPage.css';
 
 const EditPostPage = () => {
@@ -239,7 +240,7 @@ const EditPostPage = () => {
             <ImageUpload
               onImageSelect={handleImageSelect}
               label={currentImage ? 'Replace image' : 'Add an image to your post'}
-              maxSize={10 * 1024 * 1024}
+              maxSizeMB={10}
             />
           </div>
 

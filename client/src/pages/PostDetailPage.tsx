@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts';
-import { Post, Comment, User, getUserId } from '../types';
+import { getUserId } from '../types';
+import type { Post, Comment, User } from '../types';
 import '../styles/PostDetailPage.css';
 
 const PostDetailPage = () => {

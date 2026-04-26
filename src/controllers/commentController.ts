@@ -7,12 +7,12 @@ import { AuthRequest } from '../middleware/auth';
 // Get comments for a post
 export const getComments = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { postId } = req.params;
+    const postId = req.params.postId as string;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    if (!mongoose.isValidObjectId(postId)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }
@@ -44,7 +44,7 @@ export const getComments = async (req: AuthRequest, res: Response): Promise<void
 // Create a comment
 export const createComment = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { postId } = req.params;
+    const postId = req.params.postId as string;
     const { text } = req.body;
     const user = req.user;
 
@@ -53,7 +53,7 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    if (!mongoose.isValidObjectId(postId)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }
@@ -95,7 +95,7 @@ export const createComment = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateComment = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { commentId } = req.params;
+    const commentId = req.params.commentId as string;
     const { text } = req.body;
     const user = req.user;
 
@@ -104,7 +104,7 @@ export const updateComment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+    if (!mongoose.isValidObjectId(commentId)) {
       res.status(400).json({ success: false, message: 'Invalid comment ID' });
       return;
     }
@@ -147,7 +147,7 @@ export const updateComment = async (req: AuthRequest, res: Response): Promise<vo
 
 export const deleteComment = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { commentId } = req.params;
+    const commentId = req.params.commentId as string;
     const user = req.user;
 
     if (!user) {
@@ -155,7 +155,7 @@ export const deleteComment = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(commentId)) {
+    if (!mongoose.isValidObjectId(commentId)) {
       res.status(400).json({ success: false, message: 'Invalid comment ID' });
       return;
     }

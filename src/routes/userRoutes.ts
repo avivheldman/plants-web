@@ -17,12 +17,15 @@ const handleMulterUpload = (req: Request, res: Response, next: NextFunction) => 
     if (err) {
       const error = err as Error;
       if (error.message.includes('Only image files')) {
-        return res.status(400).json({ error: error.message });
+        res.status(400).json({ error: error.message });
+        return;
       }
       if (error.message.includes('File too large')) {
-        return res.status(400).json({ error: 'File size exceeds 5MB limit' });
+        res.status(400).json({ error: 'File size exceeds 5MB limit' });
+        return;
       }
-      return res.status(400).json({ error: 'File upload failed' });
+      res.status(400).json({ error: 'File upload failed' });
+      return;
     }
     next();
   });

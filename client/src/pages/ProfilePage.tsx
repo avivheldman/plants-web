@@ -1,21 +1,42 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts';
 import api from '../services/api';
-import { Post, getUserId } from '../types';
+import { getUserId } from '../types';
+import type { Post, User, PaginatedResponse } from '../types';
 import '../styles/ProfilePage.css';
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { userId: paramUserId } = useParams<{ userId?: string }>();
+  const { user: currentUser } = useAuth();
+  const currentUserId = currentUser ? getUserId(currentUser) : '';
+  const targetUserId = paramUserId || currentUserId;
+  const isSelf = !!targetUserId && targetUserId === currentUserId;
+
+  const [profile, setProfile] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    const fetchUserPosts = async () => {
+    if (!targetUserId) return;
+    if (isSelf && currentUser) {
+      setProfile(currentUser);
+      return;
+    }
+    api
+      .get<{ success: boolean; data: User }>(`/users/${targetUserId}`)
+      .then((res) => setProfile(res.data.data))
+      .catch(() => setError('Failed to load user profile'));
+  }, [targetUserId, isSelf, currentUser]);
+
+  useEffect(() => {
+    if (!targetUserId) return;
+    const fetchPosts = async () => {
       try {
-        const userId = user ? getUserId(user) : '';
-        const response = await api.get<{ data: Post[] }>(`/posts/user/${userId}`);
+        const response = await api.get<PaginatedResponse<Post>>(
+          `/posts?author=${targetUserId}&page=1&limit=20`
+        );
         setPosts(response.data.data || []);
       } catch {
         setError('Failed to load posts');
@@ -23,40 +44,39 @@ const ProfilePage = () => {
         setIsLoading(false);
       }
     };
+    fetchPosts();
+  }, [targetUserId]);
 
-    if (user) {
-      fetchUserPosts();
-    }
-  }, [user]);
-
-  if (!user) {
+  if (!profile && !error) {
     return <div className="profile-loading">Loading...</div>;
   }
+
+  const displayUser = profile || currentUser;
 
   return (
     <div className="profile-page">
       <div className="profile-header">
         <div className="profile-avatar-section">
-          {user.photoUrl ? (
+          {displayUser?.photoUrl ? (
             <img
-              src={user.photoUrl}
-              alt={user.displayName}
+              src={displayUser.photoUrl}
+              alt={displayUser.displayName}
               className="profile-avatar"
             />
           ) : (
             <div className="profile-avatar-placeholder">
-              {user.displayName.charAt(0).toUpperCase()}
+              {displayUser?.displayName?.charAt(0).toUpperCase() ?? '?'}
             </div>
           )}
         </div>
 
         <div className="profile-info">
-          <h1 className="profile-name">{user.displayName}</h1>
-          <p className="profile-email">{user.email}</p>
+          <h1 className="profile-name">{displayUser?.displayName}</h1>
+          {isSelf && <p className="profile-email">{displayUser?.email}</p>}
           <p className="profile-joined">
-            Joined {new Date(user.createdAt).toLocaleDateString('en-US', {
+            Joined {new Date(displayUser?.createdAt ?? '').toLocaleDateString('en-US', {
               month: 'long',
-              year: 'numeric'
+              year: 'numeric',
             })}
           </p>
 
@@ -67,14 +87,18 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <Link to="/profile/edit" className="edit-profile-btn">
-            Edit Profile
-          </Link>
+          {isSelf && (
+            <Link to="/profile/edit" className="edit-profile-btn">
+              Edit Profile
+            </Link>
+          )}
         </div>
       </div>
 
       <div className="profile-content">
-        <h2 className="section-title">My Posts</h2>
+        <h2 className="section-title">
+          {isSelf ? 'My Posts' : `${displayUser?.displayName ?? 'User'}'s Posts`}
+        </h2>
 
         {isLoading ? (
           <div className="posts-loading">Loading posts...</div>
@@ -82,10 +106,12 @@ const ProfilePage = () => {
           <div className="posts-error">{error}</div>
         ) : posts.length === 0 ? (
           <div className="posts-empty">
-            <p>You haven't created any posts yet.</p>
-            <Link to="/posts/create" className="create-post-link">
-              Create your first post
-            </Link>
+            <p>{isSelf ? "You haven't created any posts yet." : 'No posts yet.'}</p>
+            {isSelf && (
+              <Link to="/posts/create" className="create-post-link">
+                Create your first post
+              </Link>
+            )}
           </div>
         ) : (
           <div className="profile-posts-grid">

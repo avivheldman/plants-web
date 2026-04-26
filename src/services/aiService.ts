@@ -9,7 +9,7 @@ const getModel = () => {
   }
 
   return new ChatGoogleGenerativeAI({
-    modelName: 'gemini-pro',
+    model: 'gemini-2.0-flash',
     apiKey,
     maxOutputTokens: 1024,
     temperature: 0.3,
