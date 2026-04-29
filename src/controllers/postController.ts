@@ -4,6 +4,10 @@ import Like from '../models/Like';
 import Comment from '../models/Comment';
 import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
+import { generateEmbedding } from '../services/aiService';
+
+const embedPost = (title: string, content: string, plantName?: string, tags?: string[]) =>
+  [title, plantName, ...(tags ?? []), content].filter(Boolean).join(' ');
 
 // Get all posts with pagination (feed), supports ?author=<userId>
 export const getPosts = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -147,6 +151,11 @@ export const createPost = async (req: AuthRequest, res: Response): Promise<void>
 
     await post.save();
 
+    // Fire-and-forget — don't block the response on embedding generation
+    generateEmbedding(embedPost(post.title, post.content, post.plantName, post.tags))
+      .then((embedding) => Post.updateOne({ _id: post._id }, { embedding }))
+      .catch((err) => console.warn('Embedding generation failed:', (err as Error).message));
+
     const populatedPost = await Post.findById(post._id)
       .populate('author', 'displayName photoUrl')
       .lean();
@@ -209,6 +218,10 @@ export const updatePost = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     await post.save();
+
+    generateEmbedding(embedPost(post.title, post.content, post.plantName, post.tags))
+      .then((embedding) => Post.updateOne({ _id: post._id }, { embedding }))
+      .catch((err) => console.warn('Embedding generation failed:', (err as Error).message));
 
     const updatedPost = await Post.findById(post._id)
       .populate('author', 'displayName photoUrl')
