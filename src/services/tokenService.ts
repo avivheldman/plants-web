@@ -13,8 +13,10 @@ export interface TokenPair {
 
 const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET || 'access-secret-key';
 const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh-secret-key';
-const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m';
-const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+const ACCESS_TOKEN_EXPIRY: SignOptions['expiresIn'] =
+  (process.env.ACCESS_TOKEN_EXPIRY as SignOptions['expiresIn']) || '15m';
+const REFRESH_TOKEN_EXPIRY: SignOptions['expiresIn'] =
+  (process.env.REFRESH_TOKEN_EXPIRY as SignOptions['expiresIn']) || '7d';
 
 export const generateAccessToken = (payload: TokenPayload): string => {
   const options: SignOptions = {

@@ -6,7 +6,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const likePost = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { postId } = req.params;
+    const postId = req.params.postId as string;
     const user = req.user;
 
     if (!user) {
@@ -14,7 +14,7 @@ export const likePost = async (req: AuthRequest, res: Response): Promise<void> =
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    if (!mongoose.isValidObjectId(postId)) {
       res.status(400).json({ error: 'Invalid post ID' });
       return;
     }
@@ -44,7 +44,7 @@ export const likePost = async (req: AuthRequest, res: Response): Promise<void> =
 
 export const unlikePost = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { postId } = req.params;
+    const postId = req.params.postId as string;
     const user = req.user;
 
     if (!user) {
@@ -52,7 +52,7 @@ export const unlikePost = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    if (!mongoose.isValidObjectId(postId)) {
       res.status(400).json({ error: 'Invalid post ID' });
       return;
     }
@@ -82,7 +82,7 @@ export const unlikePost = async (req: AuthRequest, res: Response): Promise<void>
 
 export const checkLike = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { postId } = req.params;
+    const postId = req.params.postId as string;
     const user = req.user;
 
     if (!user) {
@@ -90,7 +90,7 @@ export const checkLike = async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    if (!mongoose.isValidObjectId(postId)) {
       res.status(400).json({ error: 'Invalid post ID' });
       return;
     }
@@ -133,9 +133,9 @@ export const getLikedPosts = async (req: AuthRequest, res: Response): Promise<vo
 
 export const getPostLikers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { postId } = req.params;
+    const postId = req.params.postId as string;
 
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+    if (!mongoose.isValidObjectId(postId)) {
       res.status(400).json({ error: 'Invalid post ID' });
       return;
     }

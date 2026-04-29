@@ -59,8 +59,6 @@ router.get('/', getPosts);
  *       404:
  *         description: Post not found
  */
-router.get('/:id', getPostById);
-
 /**
  * @swagger
  * /posts/user/{userId}:
@@ -87,6 +85,8 @@ router.get('/:id', getPostById);
  *         description: List of user's posts
  */
 router.get('/user/:userId', getPostsByUser);
+
+router.get('/:id', getPostById);
 
 /**
  * @swagger

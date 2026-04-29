@@ -4,22 +4,36 @@ import Like from '../models/Like';
 import Comment from '../models/Comment';
 import mongoose from 'mongoose';
 import { AuthRequest } from '../middleware/auth';
+import { generateEmbedding } from '../services/aiService';
 
-// Get all posts with pagination (feed)
+const embedPost = (title: string, content: string, plantName?: string, tags?: string[]) =>
+  [title, plantName, ...(tags ?? []), content].filter(Boolean).join(' ');
+
+// Get all posts with pagination (feed), supports ?author=<userId>
 export const getPosts = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
+    const filter: Record<string, unknown> = { isPublished: true };
+    const author = typeof req.query.author === 'string' ? req.query.author : undefined;
+    if (author) {
+      if (!mongoose.isValidObjectId(author)) {
+        res.status(400).json({ success: false, message: 'Invalid author ID' });
+        return;
+      }
+      filter.author = author;
+    }
+
     const [posts, total] = await Promise.all([
-      Post.find({ isPublished: true })
+      Post.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('author', 'displayName photoUrl')
         .lean(),
-      Post.countDocuments({ isPublished: true }),
+      Post.countDocuments(filter),
     ]);
 
     res.json({
@@ -39,9 +53,9 @@ export const getPosts = async (req: AuthRequest, res: Response): Promise<void> =
 // Get single post by ID
 export const getPostById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }
@@ -65,12 +79,12 @@ export const getPostById = async (req: AuthRequest, res: Response): Promise<void
 // Get posts by user ID
 export const getPostsByUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
+    if (!mongoose.isValidObjectId(userId)) {
       res.status(400).json({ success: false, message: 'Invalid user ID' });
       return;
     }
@@ -137,6 +151,11 @@ export const createPost = async (req: AuthRequest, res: Response): Promise<void>
 
     await post.save();
 
+    // Fire-and-forget — don't block the response on embedding generation
+    generateEmbedding(embedPost(post.title, post.content, post.plantName, post.tags))
+      .then((embedding) => Post.updateOne({ _id: post._id }, { embedding }))
+      .catch((err) => console.warn('Embedding generation failed:', (err as Error).message));
+
     const populatedPost = await Post.findById(post._id)
       .populate('author', 'displayName photoUrl')
       .lean();
@@ -151,7 +170,7 @@ export const createPost = async (req: AuthRequest, res: Response): Promise<void>
 // Update a post
 export const updatePost = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { title, content, plantName, tags } = req.body;
     const user = req.user;
 
@@ -160,7 +179,7 @@ export const updatePost = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }
@@ -200,6 +219,10 @@ export const updatePost = async (req: AuthRequest, res: Response): Promise<void>
 
     await post.save();
 
+    generateEmbedding(embedPost(post.title, post.content, post.plantName, post.tags))
+      .then((embedding) => Post.updateOne({ _id: post._id }, { embedding }))
+      .catch((err) => console.warn('Embedding generation failed:', (err as Error).message));
+
     const updatedPost = await Post.findById(post._id)
       .populate('author', 'displayName photoUrl')
       .lean();
@@ -214,7 +237,7 @@ export const updatePost = async (req: AuthRequest, res: Response): Promise<void>
 // Delete a post
 export const deletePost = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const user = req.user;
 
     if (!user) {
@@ -222,7 +245,7 @@ export const deletePost = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }
@@ -256,7 +279,7 @@ export const deletePost = async (req: AuthRequest, res: Response): Promise<void>
 // Like a post
 export const likePost = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const user = req.user;
 
     if (!user) {
@@ -264,7 +287,7 @@ export const likePost = async (req: AuthRequest, res: Response): Promise<void> =
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }
@@ -299,7 +322,7 @@ export const likePost = async (req: AuthRequest, res: Response): Promise<void> =
 // Unlike a post
 export const unlikePost = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const user = req.user;
 
     if (!user) {
@@ -307,7 +330,7 @@ export const unlikePost = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }
@@ -342,7 +365,7 @@ export const unlikePost = async (req: AuthRequest, res: Response): Promise<void>
 // Check if user liked a post
 export const checkLiked = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const user = req.user;
 
     if (!user) {
@@ -350,7 +373,7 @@ export const checkLiked = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       res.status(400).json({ success: false, message: 'Invalid post ID' });
       return;
     }

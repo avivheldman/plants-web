@@ -11,6 +11,7 @@ export interface IPost extends Document {
   likesCount: number;
   commentsCount: number;
   isPublished: boolean;
+  embedding?: number[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,6 +59,11 @@ const postSchema = new Schema<IPost>(
     isPublished: {
       type: Boolean,
       default: true,
+    },
+    embedding: {
+      type: [Number],
+      default: [],
+      select: false,
     },
   },
   {

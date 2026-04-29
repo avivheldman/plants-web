@@ -38,6 +38,11 @@ function App() {
                 <EditProfilePage />
               </ProtectedRoute>
             } />
+            <Route path="profile/:userId" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
             <Route path="posts/create" element={
               <ProtectedRoute>
                 <CreatePostPage />

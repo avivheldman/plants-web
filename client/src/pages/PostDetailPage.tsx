@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts';
-import { Post, Comment, User, getUserId } from '../types';
+import { getUserId } from '../types';
+import type { Post, Comment, User } from '../types';
 import '../styles/PostDetailPage.css';
 
 const PostDetailPage = () => {
@@ -187,7 +188,7 @@ const PostDetailPage = () => {
       <div className="post-detail-container">
         <article className="post-detail">
           <header className="post-detail-header">
-            <Link to={`/profile/${authorId}`} className="author-info">
+            <Link to={`/profile/${authorId}`} className="post-author">
               {author?.photoUrl ? (
                 <img src={author.photoUrl} alt={author.displayName} className="author-avatar" />
               ) : (
@@ -195,45 +196,47 @@ const PostDetailPage = () => {
                   {author?.displayName?.charAt(0).toUpperCase() || '?'}
                 </div>
               )}
-              <div className="author-details">
+              <div className="author-info">
                 <span className="author-name">{author?.displayName || 'Unknown'}</span>
                 <span className="post-date">{formatDate(post.createdAt)}</span>
               </div>
             </Link>
 
             {isOwner && (
-              <div className="post-actions">
-                <Link to={`/posts/${post._id}/edit`} className="edit-button">
+              <div className="post-actions-menu">
+                <Link to={`/posts/${post._id}/edit`} className="edit-btn">
                   Edit
                 </Link>
-                <button onClick={handleDelete} className="delete-button">
+                <button onClick={handleDelete} className="delete-btn">
                   Delete
                 </button>
               </div>
             )}
           </header>
 
-          <h1 className="post-title">{post.title}</h1>
+          <div className="post-detail-content">
+            <h1 className="post-title">{post.title}</h1>
 
-          {post.image && (
-            <div className="post-image-container">
-              <img src={post.image} alt={post.title} className="post-image" />
-            </div>
-          )}
+            {post.image && (
+              <div className="post-image-container">
+                <img src={post.image} alt={post.title} className="post-image" />
+              </div>
+            )}
 
-          <div className="post-content">{post.content}</div>
+            <div className="post-content">{post.content}</div>
 
-          {post.plantName && <span className="plant-tag">{post.plantName}</span>}
+            {post.plantName && <span className="plant-tag">{post.plantName}</span>}
 
-          {post.tags && post.tags.length > 0 && (
-            <div className="post-tags">
-              {post.tags.map((tag, index) => (
-                <span key={index} className="tag">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
+            {post.tags && post.tags.length > 0 && (
+              <div className="post-tags">
+                {post.tags.map((tag, index) => (
+                  <span key={index} className="post-tag">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
 
           <footer className="post-detail-footer">
             <button
@@ -293,7 +296,7 @@ const PostDetailPage = () => {
                 const isCommentOwner = user && commentAuthor && getUserId(user) === commentAuthorId;
 
                 return (
-                  <div key={comment._id} className="comment">
+                  <div key={comment._id} className="comment-item">
                     <div className="comment-header">
                       <Link
                         to={`/profile/${commentAuthorId}`}
@@ -310,12 +313,14 @@ const PostDetailPage = () => {
                             {commentAuthor?.displayName?.charAt(0).toUpperCase() || '?'}
                           </div>
                         )}
-                        <span>{commentAuthor?.displayName || 'Unknown'}</span>
+                        <div className="comment-meta">
+                          <span>{commentAuthor?.displayName || 'Unknown'}</span>
+                          <span className="comment-date">{formatDate(comment.createdAt)}</span>
+                        </div>
                       </Link>
-                      <span className="comment-date">{formatDate(comment.createdAt)}</span>
                       {isCommentOwner && (
                         <button
-                          className="delete-comment"
+                          className="delete-comment-btn"
                           onClick={() => handleDeleteComment(comment._id)}
                         >
                           Delete

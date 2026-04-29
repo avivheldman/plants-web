@@ -4,7 +4,7 @@ import { useAuth } from '../contexts';
 import { useFormValidation } from '../hooks';
 import ImageUpload from '../components/ImageUpload';
 import api from '../services/api';
-import { User } from '../types';
+import type { User } from '../types';
 import '../styles/EditProfilePage.css';
 
 const EditProfilePage = () => {
@@ -41,26 +41,26 @@ const EditProfilePage = () => {
 
     setIsSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('displayName', values.displayName);
-
-      if (selectedImage) {
-        formData.append('photo', selectedImage);
-      } else if (removeImage) {
-        formData.append('removePhoto', 'true');
+      if (values.displayName !== user?.displayName) {
+        await api.put('/users/profile', { displayName: values.displayName });
       }
 
-      const response = await api.put<{ user: User }>('/users/profile', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      if (selectedImage) {
+        const photoForm = new FormData();
+        photoForm.append('photoUrl', selectedImage);
+        await api.post('/users/profile/photo', photoForm, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else if (removeImage) {
+        await api.delete('/users/profile/photo');
+      }
 
-      updateUser(response.data.user);
+      const refreshed = await api.get<{ user: User }>('/users/profile');
+      updateUser(refreshed.data.user);
       navigate('/profile');
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setServerError(err.response?.data?.message || 'Failed to update profile');
+      const err = error as { response?: { data?: { message?: string; error?: string } } };
+      setServerError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
     } finally {
       setIsSubmitting(false);
     }

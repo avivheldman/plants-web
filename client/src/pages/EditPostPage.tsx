@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { ImageUpload } from '../components';
 import { useAuth } from '../contexts';
-import { Post, User, getUserId } from '../types';
+import { getUserId } from '../types';
+import type { Post, User } from '../types';
 import '../styles/CreatePostPage.css';
 
 const EditPostPage = () => {
@@ -22,6 +23,9 @@ const EditPostPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [unauthorized, setUnauthorized] = useState(false);
 
@@ -90,7 +94,7 @@ const EditPostPage = () => {
           .split(',')
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0);
-        formData.append('tags', JSON.stringify(tags));
+        tags.forEach((tag) => formData.append('tags', tag));
       }
 
       if (newImage) {
@@ -114,6 +118,34 @@ const EditPostPage = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSuggestTags = async () => {
+    if (!title.trim() || !content.trim()) {
+      setSuggestError('Add a title and content first');
+      return;
+    }
+    setSuggesting(true);
+    setSuggestError(null);
+    try {
+      const res = await api.post<{ success: boolean; data: { summary: string; suggestedTags: string[] } }>(
+        '/search/analyze',
+        { title: title.trim(), content: content.trim() }
+      );
+      setSuggestedTags(res.data.data.suggestedTags || []);
+    } catch {
+      setSuggestError('Could not suggest tags right now. Try again.');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const addSuggestedTag = (tag: string) => {
+    const current = tagsInput.split(',').map((t) => t.trim()).filter(Boolean);
+    if (current.includes(tag)) return;
+    const next = [...current, tag].join(', ');
+    setTagsInput(next);
+    setSuggestedTags((prev) => prev.filter((t) => t !== tag));
   };
 
   const handleImageSelect = (file: File) => {
@@ -211,15 +243,42 @@ const EditPostPage = () => {
 
           <div className="form-group">
             <label htmlFor="tags">Tags (optional)</label>
-            <input
-              type="text"
-              id="tags"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="e.g., indoor, tropical, beginner (comma-separated)"
-              disabled={isSubmitting}
-            />
+            <div className="tags-input-row">
+              <input
+                type="text"
+                id="tags"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+                placeholder="e.g., indoor, tropical, beginner (comma-separated)"
+                disabled={isSubmitting}
+              />
+              <button
+                type="button"
+                className="suggest-tags-btn"
+                onClick={handleSuggestTags}
+                disabled={suggesting || !title.trim() || !content.trim()}
+                title="Use AI to suggest tags from your title and content"
+              >
+                {suggesting ? '…' : '✨ Suggest tags'}
+              </button>
+            </div>
             <span className="field-hint">Separate tags with commas</span>
+            {suggestError && <span className="field-error">{suggestError}</span>}
+            {suggestedTags.length > 0 && (
+              <div className="suggested-tags">
+                <span className="suggested-tags-label">Suggested:</span>
+                {suggestedTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="suggested-tag-chip"
+                    onClick={() => addSuggestedTag(tag)}
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="form-section">
@@ -239,7 +298,7 @@ const EditPostPage = () => {
             <ImageUpload
               onImageSelect={handleImageSelect}
               label={currentImage ? 'Replace image' : 'Add an image to your post'}
-              maxSize={10 * 1024 * 1024}
+              maxSizeMB={10}
             />
           </div>
 

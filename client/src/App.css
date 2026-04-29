@@ -93,3 +93,43 @@ h1 {
 .mb-1 { margin-bottom: 0.5rem; }
 .mb-2 { margin-bottom: 1rem; }
 .mb-3 { margin-bottom: 1.5rem; }
+
+/* Home page */
+.home-page {
+  max-width: 600px;
+  margin: 4rem auto;
+  text-align: center;
+  padding: 2rem;
+}
+
+.home-cta {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.home-cta-button {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: #4caf50;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.home-cta-button:hover {
+  background: #43a047;
+}
+
+.home-cta-secondary {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.home-cta-secondary:hover {
+  background: #e0e0e0;
+}

@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import api from '../services/api';
-import { User, LoginResponse, RegisterResponse } from '../types';
+import type { User, LoginResponse, RegisterResponse } from '../types';
 
 interface AuthContextType {
   user: User | null;
@@ -11,7 +12,6 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (user: User) => void;
   googleLogin: () => void;
-  facebookLogin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,11 +83,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     window.location.href = `${apiUrl}/auth/google`;
   }, []);
 
-  const facebookLogin = useCallback(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    window.location.href = `${apiUrl}/auth/facebook`;
-  }, []);
-
   return (
     <AuthContext.Provider
       value={{
@@ -99,7 +94,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logout,
         updateUser,
         googleLogin,
-        facebookLogin,
       }}
     >
       {children}

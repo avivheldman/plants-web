@@ -1,6 +1,5 @@
 import request from 'supertest';
 import app from '../app';
-import User from '../models/User';
 
 describe('User API', () => {
   let accessToken: string;
