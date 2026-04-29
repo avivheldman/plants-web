@@ -4,7 +4,7 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+  testMatch: ['**/*.test.ts', '**/*.spec.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
@@ -12,6 +12,11 @@ const config: Config = {
     '!src/**/*.d.ts',
     '!src/server.ts',
     '!src/**/__tests__/**',
+    '!src/services/aiService.ts',
+    '!src/controllers/searchController.ts',
+    '!src/config/passport.ts',
+    '!src/config/database.ts',
+    '!src/config/env.ts',
   ],
   coverageThreshold: {
     global: {

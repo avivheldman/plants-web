@@ -8,7 +8,7 @@ import type { Post, User } from '../types';
 import '../styles/CreatePostPage.css';
 
 const EditPostPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { postId: id } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
 

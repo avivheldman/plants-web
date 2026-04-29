@@ -44,6 +44,10 @@ const FeedPage = () => {
   const [searchResults, setSearchResults] = useState<SearchPost[] | null>(null);
   const [searching, setSearching] = useState(false);
 
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [likesOverride, setLikesOverride] = useState<Record<string, number>>({});
+  const [likingIds, setLikingIds] = useState<Set<string>>(new Set());
+
   const loadPage = useCallback(async (nextPage: number) => {
     setLoading(true);
     setError(null);
@@ -65,6 +69,59 @@ const FeedPage = () => {
   useEffect(() => {
     loadPage(1);
   }, [loadPage]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLikedIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get<{ posts: { _id: string }[] }>('/social/likes');
+        if (cancelled) return;
+        setLikedIds(new Set(res.data.posts.map((p) => p._id)));
+      } catch (e) {
+        console.error('Failed to load liked posts', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
+
+  const toggleLike = async (postId: string, baseCount: number) => {
+    if (!isAuthenticated || likingIds.has(postId)) return;
+    const wasLiked = likedIds.has(postId);
+    const currentCount = likesOverride[postId] ?? baseCount;
+
+    setLikingIds((prev) => { const n = new Set(prev); n.add(postId); return n; });
+    setLikedIds((prev) => {
+      const n = new Set(prev);
+      if (wasLiked) n.delete(postId); else n.add(postId);
+      return n;
+    });
+    setLikesOverride((prev) => ({
+      ...prev,
+      [postId]: wasLiked ? Math.max(0, currentCount - 1) : currentCount + 1,
+    }));
+
+    try {
+      if (wasLiked) {
+        await api.delete(`/social/posts/${postId}/like`);
+      } else {
+        await api.post(`/social/posts/${postId}/like`);
+      }
+    } catch (e) {
+      console.error('Like toggle failed', e);
+      setLikedIds((prev) => {
+        const n = new Set(prev);
+        if (wasLiked) n.add(postId); else n.delete(postId);
+        return n;
+      });
+      setLikesOverride((prev) => ({ ...prev, [postId]: currentCount }));
+    } finally {
+      setLikingIds((prev) => { const n = new Set(prev); n.delete(postId); return n; });
+    }
+  };
 
   useEffect(() => {
     if (searchResults !== null) return;
@@ -242,9 +299,16 @@ const FeedPage = () => {
                 </Link>
 
                 <footer className="post-footer">
-                  <span className="like-button" aria-label="likes">
-                    ❤ {post.likesCount ?? 0}
-                  </span>
+                  <button
+                    type="button"
+                    className={`like-button${likedIds.has(postId) ? ' liked' : ''}`}
+                    aria-label={likedIds.has(postId) ? 'Unlike' : 'Like'}
+                    aria-pressed={likedIds.has(postId)}
+                    disabled={!isAuthenticated || likingIds.has(postId)}
+                    onClick={() => toggleLike(postId, post.likesCount ?? 0)}
+                  >
+                    {likedIds.has(postId) ? '❤' : '🤍'} {likesOverride[postId] ?? post.likesCount ?? 0}
+                  </button>
                   <Link to={`/posts/${postId}`} className="comments-button">
                     💬 {post.commentsCount ?? 0}
                   </Link>

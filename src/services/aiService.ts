@@ -133,23 +133,25 @@ export const smartSearch = async (query: string, limit = 10): Promise<unknown[]>
     ? relevant.slice(0, 12)
     : scored.slice(0, 3);
 
-  const top = finalList.slice(0, 20);
+  const top = finalList.slice(0, 12);
 
-  // Second Gemini call: get a one-sentence "why" for the top 5
+  // Second Gemini call: get a one-sentence "why" for every top result
   if (top.length > 0) {
     try {
       const model = getModel();
       const idMap = new Map(top.map((p, i) => [String(i), p]));
-      const items = top.slice(0, 10).map((p, i) =>
+      const items = top.map((p, i) =>
         `${i}. title="${(p.title || '').slice(0, 80)}" plant="${p.plantName ?? ''}" tags=[${(p.tags ?? []).slice(0, 5).join(',')}]`
       ).join('\n');
 
       const rerankResponse = await withTimeout(
         model.invoke([
           new SystemMessage(
-            'You are a plant search assistant. Given a user query and a list of semantically similar posts, ' +
-            'return ONLY a JSON array: [{"id":"<index>","reason":"<one sentence why this matches the query>"}]. ' +
-            'Include at most 5 entries. Skip posts that are clearly irrelevant.'
+            'You are a plant search assistant. For EACH numbered post below, write one short sentence ' +
+            'explaining why it matches the user query (or its closest connection if the link is weak). ' +
+            'Return ONLY a JSON array, one entry per post, in the same order: ' +
+            '[{"id":"<the index number shown>","reason":"<one sentence>"}]. ' +
+            'Do not skip any post. Do not wrap in markdown.'
           ),
           new HumanMessage(`Query: ${query}\n\nPosts:\n${items}`),
         ]),
@@ -158,7 +160,9 @@ export const smartSearch = async (query: string, limit = 10): Promise<unknown[]>
 
       const rerankText = typeof rerankResponse.content === 'string' ? rerankResponse.content : '';
       const rerankCleaned = rerankText.replace(/```json\n?|```\n?/g, '').trim();
-      const parsed = JSON.parse(rerankCleaned) as Array<{ id?: string; reason?: string }>;
+      const arrayMatch = rerankCleaned.match(/\[[\s\S]*\]/);
+      const jsonText = arrayMatch ? arrayMatch[0] : rerankCleaned;
+      const parsed = JSON.parse(jsonText) as Array<{ id?: string | number; reason?: string }>;
 
       if (Array.isArray(parsed)) {
         for (const entry of parsed) {
